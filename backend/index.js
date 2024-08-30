@@ -1,13 +1,15 @@
-// /index.js
 const express = require('express');
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
@@ -15,10 +17,10 @@ app.use(cors());
 
 // MySQL Connection
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'ecommerce'
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DATABASE_NAME
 });
 
 db.connect(err => {
@@ -59,11 +61,10 @@ app.post('/login', (req, res) => {
             return res.status(400).send({ message: 'Invalid credentials' });
         }
 
-        const token = jwt.sign({ id: user.id }, 'secretkey', { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).send({ message: 'Login successful', token });
     });
 });
-
 
 app.get('/products', (req, res) => {
     const sql = 'SELECT * FROM products';
@@ -73,7 +74,6 @@ app.get('/products', (req, res) => {
     });
 });
 
-
 app.get('/products/:id', (req, res) => {
     const sql = 'SELECT * FROM products WHERE id = ?';
     db.query(sql, [req.params.id], (err, result) => {
@@ -81,7 +81,6 @@ app.get('/products/:id', (req, res) => {
         res.json(result[0]); // Return the first and only product
     });
 });
-
 
 app.post('/place-order', (req, res) => {
     const { userId, cartItems, total } = req.body;
